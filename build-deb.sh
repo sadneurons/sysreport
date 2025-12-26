@@ -2,6 +2,7 @@
 
 # Build the project
 echo "Building sysreport..."
+VERSION="0.5.0"
 make clean
 make
 

@@ -13,7 +13,10 @@ A comprehensive, modern system monitoring utility for Linux that provides detail
 - **CPU Statistics**: Overall usage, per-core breakdown (all cores), load averages (1/5/15 min), temperature sensors
 - **Memory Monitoring**: RAM and swap usage with available/used/percentage breakdowns
 - **Disk Analytics**: Multi-partition support with usage statistics per mount point
-- **Network Stats**: Traffic monitoring (RX/TX bytes) for all interfaces
+- **Network Stats**: Traffic monitoring (RX/TX bytes) with real-time speed calculation (Mbps)
+- **GPU Monitoring**: NVIDIA and AMD GPU usage, memory, and temperature
+- **Battery Info**: Status, charge level, and health percentage (laptops)
+- **Fan Speeds**: RPM monitoring for system cooling fans
 - **Process Tracking**: Top 5 processes by memory consumption
 - **System Info**: Uptime, thermal sensor data
 
@@ -26,10 +29,12 @@ A comprehensive, modern system monitoring utility for Linux that provides detail
   - Alert notifications for critical thresholds
 
 ### 🔍 Advanced Features
+- **Configuration File**: Persistent settings via `~/.config/sysreport/config.conf`
 - **Watch Mode**: Continuous monitoring with customizable refresh intervals
 - **Smart Filtering**: Display only CPU, memory, disk, network, or process information
 - **File Output**: Save reports to files for analysis or logging
 - **Configurable Display**: Toggle colors, progress bars, timestamps, and alerts
+- **Custom Thresholds**: Set your own warning/critical levels for alerts
 
 ## 📸 Example Output
 
@@ -248,6 +253,61 @@ sysreport -w -i 2 -c -p --alerts
 ### Watch Mode
 - `-w, --watch` - Continuous monitoring
 - `-i, --interval SEC` - Update interval (default: 2)
+
+### Configuration
+- `--config FILE` - Use custom config file (default: `~/.config/sysreport/config.conf`)
+
+## ⚙️ Configuration File
+
+sysreport supports persistent configuration via `~/.config/sysreport/config.conf`. This allows you to set defaults without using command-line flags every time.
+
+### Creating Your Config
+
+```bash
+# Create config directory
+mkdir -p ~/.config/sysreport
+
+# Copy example config
+cp config.conf.example ~/.config/sysreport/config.conf
+
+# Edit with your preferred settings
+nano ~/.config/sysreport/config.conf
+```
+
+### Example Configuration
+
+```ini
+[display]
+# Visual settings
+colors = true
+progress_bars = true
+alerts = true
+timestamp = false
+format = text
+top_processes = 5
+
+[watch]
+# Default refresh interval for watch mode
+default_interval = 2
+
+[thresholds]
+# Custom alert thresholds (percentage)
+cpu_warning = 70.0
+cpu_critical = 85.0
+ram_warning = 75.0
+ram_critical = 85.0
+disk_warning = 80.0
+disk_critical = 90.0
+temp_warning = 60.0
+temp_critical = 80.0
+
+[filters]
+# Default filters (normally false)
+cpu_only = false
+memory_only = false
+```
+
+**Note**: Command-line options always override config file settings.
 
 ## 📋 Requirements
 

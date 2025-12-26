@@ -14,6 +14,7 @@ fi
 echo "Creating .deb package structure..."
 mkdir -p debian/usr/bin
 mkdir -p debian/usr/share/doc/sysreport
+mkdir -p debian/usr/share/sysreport
 mkdir -p debian/usr/share/man/man1
 mkdir -p debian/DEBIAN
 
@@ -23,6 +24,9 @@ chmod 755 debian/usr/bin/sysreport
 
 # Copy documentation
 cp README.md debian/usr/share/doc/sysreport/
+
+# Copy example config
+cp config.conf.example debian/usr/share/sysreport/
 
 # Copy and compress man page
 cp sysreport.1 debian/usr/share/man/man1/sysreport.1

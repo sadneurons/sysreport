@@ -28,6 +28,35 @@ struct NetworkInfo {
     std::string interface;
     long rx_bytes;
     long tx_bytes;
+    double rx_mbps;  // Receive speed in Mbps
+    double tx_mbps;  // Transmit speed in Mbps
+};
+
+// GPU information
+struct GPUInfo {
+    std::string name;
+    std::string vendor;  // nvidia, amd, intel
+    double utilization_percent;
+    double memory_used_mb;
+    double memory_total_mb;
+    double temperature;
+    bool available;
+};
+
+// Battery information
+struct BatteryInfo {
+    bool present;
+    bool charging;
+    double percent;
+    double capacity_percent;  // Health
+    std::string status;  // Charging, Discharging, Full
+    int time_remaining_minutes;  // -1 if unknown
+};
+
+// Fan information
+struct FanInfo {
+    std::string label;
+    int rpm;
 };
 
 // Static hardware information
@@ -59,6 +88,9 @@ struct UtilizationInfo {
     double load_avg_5;
     double load_avg_15;
     std::vector<double> temperatures;
+    std::vector<GPUInfo> gpus;
+    BatteryInfo battery;
+    std::vector<FanInfo> fans;
 };
 
 // Display options

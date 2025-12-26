@@ -1,0 +1,59 @@
+# sysreport configuration file
+# Location: ~/.config/sysreport/config.conf
+#
+# This file follows INI format. Lines starting with # are comments.
+# Boolean values: true/false, yes/no, 1/0, on/off
+
+[display]
+# Enable colored output by default
+colors = true
+
+# Show progress bars for percentages
+progress_bars = true
+
+# Show threshold alerts/warnings
+alerts = true
+
+# Show static hardware information
+static_info = true
+
+# Show dynamic utilization statistics
+dynamic_info = true
+
+# Include timestamp in output
+timestamp = false
+
+# Default output format: text, json, or csv
+format = text
+
+# Number of top processes to display
+top_processes = 5
+
+[watch]
+# Default refresh interval in seconds for watch mode
+default_interval = 2
+
+[thresholds]
+# CPU usage thresholds (percentage)
+cpu_warning = 80.0
+cpu_critical = 90.0
+
+# Memory usage thresholds (percentage)
+ram_warning = 80.0
+ram_critical = 90.0
+
+# Disk usage thresholds (percentage)
+disk_warning = 80.0
+disk_critical = 90.0
+
+# Temperature thresholds (Celsius)
+temp_warning = 60.0
+temp_critical = 80.0
+
+[filters]
+# Default filters (normally all false, but can be set to filter by default)
+cpu_only = false
+memory_only = false
+disk_only = false
+network_only = false
+process_only = false

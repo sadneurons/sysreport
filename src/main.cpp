@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include "cli.h"
 #include "system_info.h"
+#include "config.h"
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
@@ -23,8 +24,13 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
-    // Setup display options
+    // Load configuration file
+    std::string config_path = getOptionValue(args, "--config");
+    Config config = loadConfig(config_path);
+    
+    // Setup display options from config
     DisplayOptions opts;
+    applyConfigToDisplayOptions(config, opts);
     
     // Determine what to show
     opts.show_static = hasFlag(args, "-s") || hasFlag(args, "--static");
@@ -55,15 +61,25 @@ int main(int argc, char* argv[]) {
         opts.show_static = false;
     }
     
-    // Display options
-    opts.use_colors = !hasFlag(args, "--no-color");
-    if (hasFlag(args, "-c") || hasFlag(args, "--color")) {
+    // Display options - CLI overrides config
+    if (hasFlag(args, "--no-color")) {
+        opts.use_colors = false;
+    } else if (hasFlag(args, "-c") || hasFlag(args, "--color")) {
         opts.use_colors = true;
     }
+    // else: use config default (already set)
     
-    opts.show_progress_bars = hasFlag(args, "-p") || hasFlag(args, "--progress");
-    opts.show_timestamp = hasFlag(args, "-t") || hasFlag(args, "--timestamp");
-    opts.show_alerts = hasFlag(args, "--alerts");
+    if (hasFlag(args, "-p") || hasFlag(args, "--progress")) {
+        opts.show_progress_bars = true;
+    }
+    
+    if (hasFlag(args, "-t") || hasFlag(args, "--timestamp")) {
+        opts.show_timestamp = true;
+    }
+    
+    if (hasFlag(args, "--alerts")) {
+        opts.show_alerts = true;
+    }
     
     // Get format
     opts.format = getOptionValue(args, "-f");
@@ -93,7 +109,7 @@ int main(int argc, char* argv[]) {
     
     // Watch mode
     bool watch_mode = hasFlag(args, "-w") || hasFlag(args, "--watch");
-    int interval = 2; // default 2 seconds
+    int interval = config.default_interval; // use config default
     
     std::string interval_str = getOptionValue(args, "-i");
     if (interval_str.empty()) {

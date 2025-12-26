@@ -12,6 +12,8 @@
 #include <thread>
 #include <algorithm>
 #include <dirent.h>
+#include <chrono>
+#include <map>
 
 // ANSI color codes
 const std::string COLOR_RESET = "\033[0m";
@@ -305,6 +307,165 @@ std::vector<double> getTemperatures() {
     return temps;
 }
 
+// Get GPU information (NVIDIA)
+GPUInfo getNvidiaGPU() {
+    GPUInfo gpu;
+    gpu.available = false;
+    gpu.vendor = "nvidia";
+    
+    // Try to execute nvidia-smi
+    FILE* pipe = popen("nvidia-smi --query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits 2>/dev/null", "r");
+    if (!pipe) return gpu;
+    
+    char buffer[512];
+    if (fgets(buffer, sizeof(buffer), pipe)) {
+        std::string output(buffer);
+        std::istringstream iss(output);
+        std::string name, util, mem_used, mem_total, temp;
+        
+        std::getline(iss, name, ',');
+        std::getline(iss, util, ',');
+        std::getline(iss, mem_used, ',');
+        std::getline(iss, mem_total, ',');
+        std::getline(iss, temp, ',');
+        
+        gpu.name = trim(name);
+        gpu.utilization_percent = std::stod(trim(util));
+        gpu.memory_used_mb = std::stod(trim(mem_used));
+        gpu.memory_total_mb = std::stod(trim(mem_total));
+        gpu.temperature = std::stod(trim(temp));
+        gpu.available = true;
+    }
+    pclose(pipe);
+    return gpu;
+}
+
+// Get GPU information (AMD)
+GPUInfo getAmdGPU() {
+    GPUInfo gpu;
+    gpu.available = false;
+    gpu.vendor = "amd";
+    
+    // Try to read from sysfs for AMD GPUs
+    std::string gpu_path = "/sys/class/drm/card0/device/";
+    
+    std::string name = readFile(gpu_path + "product_name");
+    if (!name.empty()) {
+        gpu.name = trim(name);
+        gpu.available = true;
+        
+        // Try to get GPU busy percentage
+        std::string busy = readFile(gpu_path + "gpu_busy_percent");
+        if (!busy.empty()) {
+            gpu.utilization_percent = std::stod(trim(busy));
+        }
+        
+        // Try to get temperature
+        std::string temp = readFile(gpu_path + "hwmon/hwmon0/temp1_input");
+        if (!temp.empty()) {
+            gpu.temperature = std::stod(trim(temp)) / 1000.0; // Convert from millidegrees
+        }
+    }
+    
+    return gpu;
+}
+
+// Get all GPUs
+std::vector<GPUInfo> getGPUs() {
+    std::vector<GPUInfo> gpus;
+    
+    // Try NVIDIA
+    GPUInfo nvidia = getNvidiaGPU();
+    if (nvidia.available) {
+        gpus.push_back(nvidia);
+    }
+    
+    // Try AMD
+    GPUInfo amd = getAmdGPU();
+    if (amd.available) {
+        gpus.push_back(amd);
+    }
+    
+    return gpus;
+}
+
+// Get battery information
+BatteryInfo getBatteryInfo() {
+    BatteryInfo battery;
+    battery.present = false;
+    battery.time_remaining_minutes = -1;
+    
+    std::string bat_path = "/sys/class/power_supply/BAT0/";
+    
+    // Check if battery exists
+    std::string status = readFile(bat_path + "status");
+    if (status.empty()) {
+        bat_path = "/sys/class/power_supply/BAT1/";
+        status = readFile(bat_path + "status");
+    }
+    
+    if (!status.empty()) {
+        battery.present = true;
+        battery.status = trim(status);
+        battery.charging = (battery.status == "Charging");
+        
+        std::string capacity = readFile(bat_path + "capacity");
+        if (!capacity.empty()) {
+            battery.percent = std::stod(trim(capacity));
+        }
+        
+        std::string capacity_level = readFile(bat_path + "capacity_level");
+        std::string energy_full = readFile(bat_path + "energy_full");
+        std::string energy_full_design = readFile(bat_path + "energy_full_design");
+        
+        if (!energy_full.empty() && !energy_full_design.empty()) {
+            double full = std::stod(trim(energy_full));
+            double design = std::stod(trim(energy_full_design));
+            battery.capacity_percent = design > 0 ? (full / design * 100.0) : 100.0;
+        } else {
+            battery.capacity_percent = 100.0; // Unknown
+        }
+    }
+    
+    return battery;
+}
+
+// Get fan speeds
+std::vector<FanInfo> getFanSpeeds() {
+    std::vector<FanInfo> fans;
+    
+    // Look in hwmon directories
+    for (int i = 0; i < 10; i++) {
+        std::string hwmon_path = "/sys/class/hwmon/hwmon" + std::to_string(i) + "/";
+        
+        // Check if this hwmon exists
+        std::string name = readFile(hwmon_path + "name");
+        if (name.empty()) continue;
+        
+        // Look for fan inputs
+        for (int j = 1; j <= 10; j++) {
+            std::string fan_input = readFile(hwmon_path + "fan" + std::to_string(j) + "_input");
+            if (!fan_input.empty()) {
+                FanInfo fan;
+                
+                std::string fan_label = readFile(hwmon_path + "fan" + std::to_string(j) + "_label");
+                if (!fan_label.empty()) {
+                    fan.label = trim(fan_label);
+                } else {
+                    fan.label = "Fan " + std::to_string(j);
+                }
+                
+                fan.rpm = std::stoi(trim(fan_input));
+                if (fan.rpm > 0) { // Only add if fan is spinning
+                    fans.push_back(fan);
+                }
+            }
+        }
+    }
+    
+    return fans;
+}
+
 UtilizationInfo getUtilizationInfo() {
     UtilizationInfo info;
     
@@ -387,7 +548,13 @@ UtilizationInfo getUtilizationInfo() {
         info.load_avg_15 = si.loads[2] / 65536.0;
     }
     
-    // Get network stats
+    // Get network stats (with speed calculation)
+    static std::map<std::string, std::pair<long, long>> prev_net_stats; // interface -> (rx, tx)
+    static auto last_net_time = std::chrono::steady_clock::now();
+    
+    auto current_time = std::chrono::steady_clock::now();
+    double time_delta = std::chrono::duration<double>(current_time - last_net_time).count();
+    
     std::ifstream netdev("/proc/net/dev");
     std::getline(netdev, line); // skip headers
     std::getline(netdev, line);
@@ -408,15 +575,40 @@ UtilizationInfo getUtilizationInfo() {
             }
             iss >> net.tx_bytes;
             
+            // Calculate speed if we have previous data
+            net.rx_mbps = 0.0;
+            net.tx_mbps = 0.0;
+            
+            if (prev_net_stats.count(iface) && time_delta > 0) {
+                long prev_rx = prev_net_stats[iface].first;
+                long prev_tx = prev_net_stats[iface].second;
+                
+                // Calculate Mbps: (bytes_delta * 8) / (time_delta * 1000000)
+                net.rx_mbps = ((net.rx_bytes - prev_rx) * 8.0) / (time_delta * 1000000.0);
+                net.tx_mbps = ((net.tx_bytes - prev_tx) * 8.0) / (time_delta * 1000000.0);
+            }
+            
+            prev_net_stats[iface] = {net.rx_bytes, net.tx_bytes};
             info.network.push_back(net);
         }
     }
+    
+    last_net_time = current_time;
     
     // Get top processes
     info.top_processes = getTopProcesses(5);
     
     // Get temperatures
     info.temperatures = getTemperatures();
+    
+    // Get GPU information
+    info.gpus = getGPUs();
+    
+    // Get battery information
+    info.battery = getBatteryInfo();
+    
+    // Get fan speeds
+    info.fans = getFanSpeeds();
     
     return info;
 }
@@ -560,8 +752,92 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
                 oss << Icons::NETWORK + " Network:\n";
                 for (const auto& net : util.network) {
                     oss << "  " << std::setw(10) << std::left << net.interface << ": ";
-                    oss << "RX " << std::setw(10) << std::right << (net.rx_bytes / 1024 / 1024) << " MB  ";
-                    oss << "TX " << std::setw(10) << (net.tx_bytes / 1024 / 1024) << " MB\n";
+                    oss << "RX " << std::setw(10) << std::right << (net.rx_bytes / 1024 / 1024) << " MB";
+                    if (net.rx_mbps > 0.01) {
+                        oss << " (" << std::fixed << std::setprecision(2) << net.rx_mbps << " Mbps)";
+                    }
+                    oss << "  TX " << std::setw(10) << (net.tx_bytes / 1024 / 1024) << " MB";
+                    if (net.tx_mbps > 0.01) {
+                        oss << " (" << std::fixed << std::setprecision(2) << net.tx_mbps << " Mbps)";
+                    }
+                    oss << "\n";
+                }
+                oss << "\n";
+            }
+        }
+        
+        // GPU information
+        if (!opts.cpu_only && !opts.memory_only && !opts.disk_only && !opts.network_only && !opts.process_only) {
+            if (!util.gpus.empty()) {
+                for (const auto& gpu : util.gpus) {
+                    oss << "󰾲  GPU: " << gpu.name << "\n";
+                    oss << "  Usage:      ";
+                    std::string gpu_color = getColorForPercent(gpu.utilization_percent);
+                    if (opts.use_colors) oss << gpu_color;
+                    oss << std::fixed << std::setprecision(1) << gpu.utilization_percent << "%";
+                    if (opts.use_colors) oss << COLOR_RESET;
+                    if (opts.show_progress_bars) {
+                        oss << " " << getProgressBar(gpu.utilization_percent);
+                    }
+                    oss << "\n";
+                    
+                    if (gpu.memory_total_mb > 0) {
+                        double mem_percent = (gpu.memory_used_mb / gpu.memory_total_mb) * 100.0;
+                        oss << "  Memory:     " << std::fixed << std::setprecision(0) << gpu.memory_used_mb 
+                            << " / " << gpu.memory_total_mb << " MB";
+                        if (opts.use_colors) oss << getColorForPercent(mem_percent);
+                        oss << " (" << std::setprecision(1) << mem_percent << "%)";
+                        if (opts.use_colors) oss << COLOR_RESET;
+                        oss << "\n";
+                    }
+                    
+                    if (gpu.temperature > 0) {
+                        std::string temp_color = gpu.temperature >= 80 ? COLOR_RED : (gpu.temperature >= 60 ? COLOR_YELLOW : COLOR_GREEN);
+                        oss << "  Temp:       ";
+                        if (opts.use_colors) oss << temp_color;
+                        oss << std::fixed << std::setprecision(1) << gpu.temperature << "°C";
+                        if (opts.use_colors) oss << COLOR_RESET;
+                        oss << "\n";
+                    }
+                    oss << "\n";
+                }
+            }
+        }
+        
+        // Battery information
+        if (!opts.cpu_only && !opts.memory_only && !opts.disk_only && !opts.network_only && !opts.process_only) {
+            if (util.battery.present) {
+                oss << "  Battery:\n";
+                oss << "  Status:     " << util.battery.status;
+                if (util.battery.charging) {
+                    oss << " 󱐋";
+                } else {
+                    oss << " 󰂃";
+                }
+                oss << "\n";
+                
+                oss << "  Level:      ";
+                std::string bat_color = util.battery.percent < 20 ? COLOR_RED : (util.battery.percent < 50 ? COLOR_YELLOW : COLOR_GREEN);
+                if (opts.use_colors) oss << bat_color;
+                oss << std::fixed << std::setprecision(1) << util.battery.percent << "%";
+                if (opts.use_colors) oss << COLOR_RESET;
+                if (opts.show_progress_bars) {
+                    oss << " " << getProgressBar(util.battery.percent);
+                }
+                oss << "\n";
+                
+                oss << "  Health:     " << std::fixed << std::setprecision(1) << util.battery.capacity_percent << "%\n";
+                oss << "\n";
+            }
+        }
+        
+        // Fan speeds
+        if (!opts.cpu_only && !opts.memory_only && !opts.disk_only && !opts.network_only && !opts.process_only) {
+            if (!util.fans.empty()) {
+                oss << "  Fans:\n";
+                for (const auto& fan : util.fans) {
+                    oss << "  " << std::setw(12) << std::left << fan.label << ": "
+                        << std::setw(5) << std::right << fan.rpm << " RPM\n";
                 }
                 oss << "\n";
             }

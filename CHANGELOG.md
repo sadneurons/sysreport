@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic terminal width detection for responsive output
 - Professional section separators with box-drawing characters
 - Improved column alignment and visual hierarchy
+- Configuration file support (~/.config/sysreport/config.conf)
+- Custom threshold settings for alerts
+- GPU monitoring (NVIDIA and AMD support)
+- Battery status and health monitoring for laptops
+- Network speed calculation (real-time Mbps)
+- Fan speed monitoring
 
 ### Fixed
 - UTF-8 encoding issues with box-drawing characters

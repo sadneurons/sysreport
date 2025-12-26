@@ -3,10 +3,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![C++17](https://img.shields.io/badge/C++-17-blue.svg)](https://isocpp.org/)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](https://www.linux.org/)
+[![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](https://github.com/yourusername/sysreport)
 
-A comprehensive, modern system monitoring utility for Linux that provides detailed hardware information and real-time system utilization statistics with multiple output formats and an intuitive command-line interface.
+A comprehensive, modern system monitoring utility for Linux with an **interactive TUI mode** (like htop), detailed hardware information, and real-time system statistics. Features multiple output formats, GPU/battery monitoring, and an intuitive interface.
 
 ## ✨ Features
+
+### 🖥️ Interactive TUI Mode
+- **htop-like Interface**: Full-featured ncurses terminal interface
+- **Real-time Dashboard**: Live CPU, memory, GPU, and process monitoring
+- **Process Management**: Sort by CPU/memory/PID/name, kill processes
+- **Keyboard Navigation**: Intuitive controls with help screen
+- **Auto-refresh**: Configurable update intervals
 
 ### 📊 Comprehensive Metrics
 - **Hardware Information**: CPU model/cores, total RAM/swap, disk partitions, network interfaces, OS details
@@ -17,10 +25,11 @@ A comprehensive, modern system monitoring utility for Linux that provides detail
 - **GPU Monitoring**: NVIDIA and AMD GPU usage, memory, and temperature
 - **Battery Info**: Status, charge level, and health percentage (laptops)
 - **Fan Speeds**: RPM monitoring for system cooling fans
-- **Process Tracking**: Top 5 processes by memory consumption
+- **Process Tracking**: Comprehensive process list with sorting and filtering
 - **System Info**: Uptime, thermal sensor data
 
 ### 🎨 Flexible Output
+- **Interactive TUI**: Real-time dashboard (launch with `--tui`)
 - **Multiple Formats**: Text (human-readable), JSON (machine-parseable), CSV (spreadsheet-ready)
 - **Visual Enhancements**:
   - Color-coded thresholds (🟢 <70%, 🟡 70-89%, 🔴 ≥90%)
@@ -29,6 +38,7 @@ A comprehensive, modern system monitoring utility for Linux that provides detail
   - Alert notifications for critical thresholds
 
 ### 🔍 Advanced Features
+- **Interactive TUI**: Process monitoring and management
 - **Configuration File**: Persistent settings via `~/.config/sysreport/config.conf`
 - **Watch Mode**: Continuous monitoring with customizable refresh intervals
 - **Smart Filtering**: Display only CPU, memory, disk, network, or process information
@@ -361,7 +371,7 @@ man sysreport
 | **Watch Mode** | ✅ Configurable | ✅ | Interactive | Interactive |
 | **File Output** | ✅ | ❌ | ❌ | ✅ |
 | **Scriptable** | ✅ JSON/CSV | ❌ | ❌ | ✅ |
-| **Interactive TUI** | 🚧 Coming | ✅ | ✅ | ✅ |
+| **Interactive TUI** | ✅ ncurses | ✅ | ✅ | ✅ |
 | **Resource Usage** | Very Low | Very Low | Low | Medium |
 
 ### Why Choose sysreport?
@@ -518,7 +528,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Battery information for laptops
 - [x] Configuration file support
 - [x] Network speed calculation
-- [ ] Interactive TUI mode (ncurses)
+- [x] Interactive TUI mode (ncurses)
 - [ ] Historical data tracking with sparklines
 - [ ] Plugin system for custom metrics
 - [ ] Prometheus/InfluxDB exporters

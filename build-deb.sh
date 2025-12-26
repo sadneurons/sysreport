@@ -35,18 +35,21 @@ gzip -9 -f debian/usr/share/man/man1/sysreport.1
 # Create control file
 cat > debian/DEBIAN/control << EOF
 Package: sysreport
-Version: 0.1.0
+Version: 0.2.0
 Section: utils
 Priority: optional
 Architecture: amd64
-Depends: libc6 (>= 2.34), libstdc++6 (>= 11)
+Depends: libc6 (>= 2.34), libstdc++6 (>= 11), libncurses6 (>= 6)
 Maintainer: Your Name <you@example.com>
 Description: System monitoring and reporting tool
- A lightweight command-line tool for monitoring system vital statistics
- including CPU, memory, disk, network, and process information.
+ A comprehensive command-line tool for monitoring system vital statistics
+ including CPU, memory, disk, network, GPU, battery, and process information.
  .
  Features include:
+  - Interactive TUI mode (htop-like interface)
   - Real-time system monitoring
+  - GPU monitoring (NVIDIA/AMD)
+  - Battery status and health
   - Multiple output formats (text, JSON, CSV)
   - Watch mode with configurable intervals
   - Colored output with progress bars
@@ -55,13 +58,13 @@ EOF
 
 # Build the package
 echo "Building .deb package..."
-dpkg-deb --build debian sysreport_0.1.0_amd64.deb
+dpkg-deb --build debian sysreport_0.2.0_amd64.deb
 
 if [ $? -eq 0 ]; then
-    echo "Successfully created sysreport_0.1.0_amd64.deb"
+    echo "Successfully created sysreport_0.2.0_amd64.deb"
     echo ""
     echo "To install, run:"
-    echo "  sudo dpkg -i sysreport_0.1.0_amd64.deb"
+    echo "  sudo dpkg -i sysreport_0.2.0_amd64.deb"
     echo ""
     echo "To uninstall, run:"
     echo "  sudo dpkg -r sysreport"

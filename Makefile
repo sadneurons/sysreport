@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -Iinclude
-LDFLAGS = 
+LDFLAGS = -lncurses 
 
 SRC_DIR = src
 BUILD_DIR = build

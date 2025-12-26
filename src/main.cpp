@@ -7,6 +7,7 @@
 #include "cli.h"
 #include "system_info.h"
 #include "config.h"
+#include "tui.h"
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
@@ -21,6 +22,28 @@ int main(int argc, char* argv[]) {
     // Handle version flag
     if (hasFlag(args, "-v") || hasFlag(args, "--version")) {
         printVersion();
+        return 0;
+    }
+    
+    // Handle TUI mode
+    if (hasFlag(args, "-T") || hasFlag(args, "--tui")) {
+        TUI tui;
+        
+        // Get interval if specified
+        std::string interval_str = getOptionValue(args, "-i");
+        if (interval_str.empty()) {
+            interval_str = getOptionValue(args, "--interval");
+        }
+        if (!interval_str.empty()) {
+            try {
+                int interval = std::stoi(interval_str);
+                if (interval > 0) {
+                    tui.setRefreshInterval(interval);
+                }
+            } catch (...) {}
+        }
+        
+        tui.run();
         return 0;
     }
     

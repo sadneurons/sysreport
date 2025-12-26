@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-26
+
+### Added
+- **Prometheus Exporter**: Export metrics in Prometheus text format
+  - Full metric labels and help text
+  - CPU, memory, disk, network, GPU, battery metrics
+  - Per-core CPU usage with core labels
+  - Compatible with Prometheus scraping
+  - `--prometheus` flag for instant export
+- **InfluxDB Exporter**: Export metrics in InfluxDB line protocol
+  - Nanosecond precision timestamps
+  - Tags for dimensional data (interface, device, mount point)
+  - Fields for all metric values
+  - `--influxdb` flag for instant export
+- **Daemon Mode**: Run sysreport as a background daemon
+  - Continuous logging to file
+  - Configurable polling interval (default: 60s)
+  - Automatic PID file management
+  - Support for multiple export formats (JSON, CSV, Prometheus, InfluxDB)
+  - `--daemon` flag with optional `--daemon-log` and `--daemon-interval`
+- **Webhook Integration**: Send alerts to HTTP endpoints
+  - Alert on threshold violations (CPU, memory, disk, GPU)
+  - JSON payload with metric, value, threshold, severity
+  - Configurable webhook URL via `--webhook`
+  - Automatic hostname inclusion in alerts
+- New CLI flags documented in help text with examples
+- DaemonConfig structure for daemon configuration
+- WebhookClient class for HTTP POST requests
+
+### Changed
+- Version bumped to 0.4.0
+- Updated help text with Export Formats and Daemon Mode sections
+- Enhanced main.cpp with exporter and daemon handling
+
 ## [0.3.0] - 2025-12-26
 
 ### Added

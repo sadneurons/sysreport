@@ -10,6 +10,8 @@
 #include "config.h"
 #include "tui.h"
 #include "history.h"
+#include "exporters.h"
+#include "daemon.h"
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
@@ -24,6 +26,74 @@ int main(int argc, char* argv[]) {
     // Handle version flag
     if (hasFlag(args, "-v") || hasFlag(args, "--version")) {
         printVersion();
+        return 0;
+    }
+    
+    // Handle daemon mode
+    if (hasFlag(args, "--daemon")) {
+        DaemonConfig daemon_cfg;
+        
+        // Get daemon options
+        std::string log_file = getOptionValue(args, "--daemon-log");
+        if (!log_file.empty()) {
+            daemon_cfg.log_file = log_file;
+        }
+        
+        std::string interval_str = getOptionValue(args, "--daemon-interval");
+        if (!interval_str.empty()) {
+            try {
+                daemon_cfg.interval_seconds = std::stoi(interval_str);
+            } catch (...) {}
+        }
+        
+        std::string webhook_url = getOptionValue(args, "--webhook");
+        if (!webhook_url.empty()) {
+            daemon_cfg.enable_webhooks = true;
+            daemon_cfg.webhook_url = webhook_url;
+        }
+        
+        // Determine export format
+        if (hasFlag(args, "--prometheus")) {
+            daemon_cfg.export_format = "prometheus";
+        } else if (hasFlag(args, "--influxdb")) {
+            daemon_cfg.export_format = "influxdb";
+        } else if (hasFlag(args, "-f") || hasFlag(args, "--format")) {
+            daemon_cfg.export_format = getOptionValue(args, "-f");
+            if (daemon_cfg.export_format.empty()) {
+                daemon_cfg.export_format = getOptionValue(args, "--format");
+            }
+        }
+        
+        // Daemonize process
+        if (!DaemonMode::daemonize()) {
+            std::cerr << "Failed to daemonize process" << std::endl;
+            return 1;
+        }
+        
+        // Write PID file
+        DaemonMode::writePidFile(daemon_cfg.pid_file);
+        
+        // Start daemon
+        DaemonMode daemon(daemon_cfg);
+        daemon.start();
+        
+        // Remove PID file on exit
+        DaemonMode::removePidFile(daemon_cfg.pid_file);
+        
+        return 0;
+    }
+    
+    // Handle Prometheus export
+    if (hasFlag(args, "--prometheus")) {
+        UtilizationInfo util = getUtilizationInfo();
+        std::cout << PrometheusExporter::exportMetrics(util);
+        return 0;
+    }
+    
+    // Handle InfluxDB export
+    if (hasFlag(args, "--influxdb")) {
+        UtilizationInfo util = getUtilizationInfo();
+        std::cout << InfluxDBExporter::exportMetrics(util);
         return 0;
     }
     

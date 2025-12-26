@@ -35,7 +35,7 @@ gzip -9 -f debian/usr/share/man/man1/sysreport.1
 # Create control file
 cat > debian/DEBIAN/control << EOF
 Package: sysreport
-Version: 0.3.0
+Version: 0.4.0
 Section: utils
 Priority: optional
 Architecture: amd64
@@ -58,13 +58,13 @@ EOF
 
 # Build the package
 echo "Building .deb package..."
-dpkg-deb --build debian sysreport_0.3.0_amd64.deb
+dpkg-deb --build debian sysreport_0.4.0_amd64.deb
 
 if [ $? -eq 0 ]; then
-    echo "Successfully created sysreport_0.3.0_amd64.deb"
+    echo "Successfully created sysreport_0.4.0_amd64.deb"
     echo ""
     echo "To install, run:"
-    echo "  sudo dpkg -i sysreport_0.3.0_amd64.deb"
+    echo "  sudo dpkg -i sysreport_0.4.0_amd64.deb"
     echo ""
     echo "To uninstall, run:"
     echo "  sudo dpkg -r sysreport"

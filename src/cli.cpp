@@ -53,6 +53,16 @@ void printHelp() {
               << "  --save-baseline FILE Save current metrics as baseline\n"
               << "  --load-baseline FILE Load baseline from file for comparison\n"
               << "\n"
+              << "Export Formats:\n"
+              << "  --prometheus        Export metrics in Prometheus text format\n"
+              << "  --influxdb          Export metrics in InfluxDB line protocol\n"
+              << "\n"
+              << "Daemon Mode:\n"
+              << "  --daemon            Run as background daemon\n"
+              << "  --daemon-log FILE   Daemon log file (default: /var/log/sysreport.log)\n"
+              << "  --daemon-interval N Daemon polling interval in seconds (default: 60)\n"
+              << "  --webhook URL       Send alerts to webhook URL\n"
+              << "\n"
               << "Configuration:\n"
               << "  --config FILE       Use custom config file\n"
               << "                      (default: ~/.config/sysreport/config.conf)\n"
@@ -67,6 +77,9 @@ void printHelp() {
               << "  " << PROGRAM_NAME << " -w --history          # Watch mode with sparklines\n"
               << "  " << PROGRAM_NAME << " --save-baseline base.dat # Save current state as baseline\n"
               << "  " << PROGRAM_NAME << " --baseline --load-baseline base.dat # Compare to baseline\n"
+              << "  " << PROGRAM_NAME << " --prometheus          # Export metrics for Prometheus\n"
+              << "  " << PROGRAM_NAME << " --influxdb            # Export in InfluxDB format\n"
+              << "  " << PROGRAM_NAME << " --daemon --daemon-log /tmp/metrics.log # Run as daemon\n"
               << std::endl;
 }
 

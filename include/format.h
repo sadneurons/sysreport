@@ -32,6 +32,7 @@ namespace Icons {
     const std::string CHECK = "✓ ";
     const std::string ARROW_UP = "↑";
     const std::string ARROW_DOWN = "↓";
+    const std::string PLUGIN = "󰏖 ";
 }
 
 // Table structure

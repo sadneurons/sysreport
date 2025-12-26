@@ -12,6 +12,7 @@
 #include "history.h"
 #include "exporters.h"
 #include "daemon.h"
+#include "plugin.h"
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
@@ -26,6 +27,26 @@ int main(int argc, char* argv[]) {
     // Handle version flag
     if (hasFlag(args, "-v") || hasFlag(args, "--version")) {
         printVersion();
+        return 0;
+    }
+    
+    // Initialize plugin manager
+    PluginManager plugin_manager;
+    
+    // Handle plugin loading
+    std::string plugin_file = getOptionValue(args, "--plugin");
+    if (!plugin_file.empty()) {
+        plugin_manager.loadPlugin(plugin_file);
+    }
+    
+    std::string plugin_dir = getOptionValue(args, "--plugin-dir");
+    if (!plugin_dir.empty()) {
+        plugin_manager.loadPluginsFromDirectory(plugin_dir);
+    }
+    
+    // Handle list plugins
+    if (hasFlag(args, "--list-plugins")) {
+        plugin_manager.listPlugins();
         return 0;
     }
     
@@ -294,6 +315,11 @@ int main(int argc, char* argv[]) {
         
         // Format output
         std::string output = formatOutput(hw, util, opts);
+        
+        // Add plugin metrics if any plugins are loaded
+        if (plugin_manager.getLoadedPlugins().size() > 0) {
+            output += plugin_manager.formatPluginMetrics(opts.use_colors);
+        }
         
         // Write to file or stdout
         if (!output_file.empty()) {

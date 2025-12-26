@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-12-26
+
+### Added
+- **Plugin System**: Extensible architecture for custom metrics
+  - Dynamic library loading using dlopen/dlsym
+  - Plugin API with version checking (API v1)
+  - PluginManager class for loading and managing plugins
+  - `--plugin FILE` flag to load individual plugin .so files
+  - `--plugin-dir DIR` flag to load all plugins from a directory
+  - `--list-plugins` flag to display loaded plugin information
+  - Helper macros for easy plugin development
+  - Two example plugins:
+    - System Uptime plugin: uptime metrics, boot time, idle time
+    - Custom System Info plugin: user, hostname, shell, kernel, processes, datetime
+  - Plugin metrics displayed in dedicated section with icon
+  - Separate plugin build system (plugins/Makefile)
+  - Plugin icon added to format.h (󰏖)
+
+### Technical
+- Shared library (.so) plugin architecture
+- Plugin API version checking for compatibility
+- Added -ldl flag to Makefile for dynamic linking
+
 ## [0.4.0] - 2025-12-26
 
 ### Added

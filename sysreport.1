@@ -1,0 +1,213 @@
+.TH SYSREPORT 1 "December 2025" "sysreport 0.1.0" "User Commands"
+.SH NAME
+sysreport \- comprehensive system monitoring utility for Linux
+.SH SYNOPSIS
+.B sysreport
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+.B sysreport
+is a comprehensive system monitoring utility that displays hardware information and real-time system utilization statistics including CPU, memory, disk, network, and process information. It supports multiple output formats, colored output with progress bars, filtering, and continuous watch mode.
+.SH OPTIONS
+.SS Display Options
+.TP
+.BR \-h ", " \-\-help
+Show help message and exit
+.TP
+.BR \-v ", " \-\-version
+Show version information and exit
+.TP
+.BR \-s ", " \-\-static
+Show static hardware information only
+.TP
+.BR \-d ", " \-\-dynamic
+Show dynamic utilization statistics only
+.TP
+.BR \-a ", " \-\-all
+Show both static and dynamic information (default)
+.SS Filtering Options
+.TP
+.B \-\-cpu\-only
+Show only CPU information
+.TP
+.B \-\-memory\-only
+Show only memory information
+.TP
+.B \-\-disk\-only
+Show only disk information
+.TP
+.B \-\-network\-only
+Show only network information
+.TP
+.B \-\-process\-only
+Show only process information
+.SS Output Format Options
+.TP
+.BR \-f ", " \-\-format " " \fIFORMAT\fR
+Output format: text, json, or csv (default: text)
+.TP
+.BR \-o ", " \-\-output " " \fIFILE\fR
+Write output to FILE instead of stdout
+.TP
+.BR \-c ", " \-\-color
+Enable colored output (default for text format)
+.TP
+.B \-\-no\-color
+Disable colored output
+.TP
+.BR \-p ", " \-\-progress
+Show progress bars for percentage values
+.TP
+.BR \-t ", " \-\-timestamp
+Include timestamp in output
+.TP
+.B \-\-alerts
+Show threshold alerts and warnings
+.SS Watch Mode Options
+.TP
+.BR \-w ", " \-\-watch
+Enable continuous monitoring mode with screen refresh
+.TP
+.BR \-i ", " \-\-interval " " \fISECONDS\fR
+Set update interval for watch mode in seconds (default: 2)
+.SH METRICS
+.B sysreport
+collects and displays the following system metrics:
+.SS Hardware Information (Static)
+.IP \(bu 2
+Operating system version
+.IP \(bu 2
+CPU model and core count
+.IP \(bu 2
+Total RAM and swap memory
+.IP \(bu 2
+Disk partitions and total capacity
+.IP \(bu 2
+Network interface names
+.SS Utilization Statistics (Dynamic)
+.IP \(bu 2
+Overall CPU usage percentage
+.IP \(bu 2
+Per-core CPU usage breakdown
+.IP \(bu 2
+Load averages (1, 5, and 15 minutes)
+.IP \(bu 2
+System uptime
+.IP \(bu 2
+CPU temperature sensors
+.IP \(bu 2
+RAM usage (used, available, percentage)
+.IP \(bu 2
+Swap usage
+.IP \(bu 2
+Disk usage per partition (used, available, percentage)
+.IP \(bu 2
+Network traffic (RX/TX bytes per interface)
+.IP \(bu 2
+Top 5 processes by memory usage
+.SH COLOR CODING
+When colors are enabled (default for text format), percentage values are color-coded based on thresholds:
+.IP \(bu 2
+.B Green:
+Usage below 70%
+.IP \(bu 2
+.B Yellow:
+Usage between 70% and 89%
+.IP \(bu 2
+.B Red:
+Usage 90% or above
+.PP
+Temperature values are similarly color-coded:
+.IP \(bu 2
+.B Green:
+Below 60°C
+.IP \(bu 2
+.B Yellow:
+Between 60°C and 79°C
+.IP \(bu 2
+.B Red:
+80°C or above
+.SH EXAMPLES
+.TP
+Display all system information with default settings:
+.B sysreport
+.TP
+Show dynamic statistics with colors and progress bars:
+.B sysreport \-d \-c \-p
+.TP
+Watch CPU usage with 1-second updates:
+.B sysreport \-\-cpu\-only \-w \-i 1
+.TP
+Export hardware information to JSON file:
+.B sysreport \-s \-f json \-o hardware.json
+.TP
+Monitor memory with timestamps and alerts:
+.B sysreport \-\-memory\-only \-t \-\-alerts \-w
+.TP
+Show all statistics with full enhancements:
+.B sysreport \-a \-c \-p \-t \-\-alerts
+.TP
+Export current utilization to CSV:
+.B sysreport \-d \-f csv \-o stats.csv
+.SH OUTPUT FORMATS
+.SS text (default)
+Human-readable text format with optional colors, progress bars, and formatting.
+.SS json
+JSON format suitable for parsing by other tools or scripts. Colors are automatically disabled for JSON output.
+.SS csv
+Comma-separated values format suitable for spreadsheet import or data analysis. Colors are automatically disabled for CSV output.
+.SH FILES
+.TP
+.I /proc/cpuinfo
+CPU information
+.TP
+.I /proc/meminfo
+Memory information
+.TP
+.I /proc/stat
+CPU and system statistics
+.TP
+.I /proc/mounts
+Mounted filesystems
+.TP
+.I /proc/net/dev
+Network interface statistics
+.TP
+.I /sys/class/thermal/thermal_zone*/temp
+Temperature sensor data
+.TP
+.I /proc/*/stat
+Process statistics
+.TP
+.I /etc/os-release
+Operating system information
+.SH EXIT STATUS
+.TP
+.B 0
+Success
+.TP
+.B 1
+Error (invalid arguments, file write error, etc.)
+.SH NOTES
+.IP \(bu 2
+The tool requires read access to /proc and /sys filesystems
+.IP \(bu 2
+CPU usage is calculated with a 100ms sampling interval
+.IP \(bu 2
+Process memory values are approximations based on resident set size
+.IP \(bu 2
+Temperature sensors may not be available on all systems
+.IP \(bu 2
+Watch mode uses ANSI escape codes for screen clearing and may not work properly in all terminal emulators
+.SH BUGS
+Report bugs to your system administrator or maintainer.
+.SH AUTHOR
+Written for Linux system monitoring.
+.SH SEE ALSO
+.BR top (1),
+.BR htop (1),
+.BR free (1),
+.BR df (1),
+.BR iostat (1),
+.BR vmstat (8),
+.BR lscpu (1),
+.BR sensors (1)

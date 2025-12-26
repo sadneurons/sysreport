@@ -1,5 +1,6 @@
 #include "system_info.h"
 #include "format.h"
+#include "history.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -657,7 +658,31 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
             if (opts.show_progress_bars) {
                 oss << " " << getProgressBar(util.cpu_percent);
             }
+            
+            // Add sparkline and trend
+            if (opts.show_history && opts.metric_history) {
+                auto cpu_hist = opts.metric_history->getCpuHistory(20);
+                if (cpu_hist.size() >= 2) {
+                    oss << " " << opts.metric_history->renderSparkline(cpu_hist);
+                    double trend = opts.metric_history->getCpuTrend();
+                    oss << opts.metric_history->getTrendArrow(trend);
+                }
+            }
+            
             oss << "\n";
+            
+            // Baseline comparison
+            if (opts.show_baseline_comparison && opts.metric_history && opts.metric_history->hasBaseline()) {
+                auto baseline = opts.metric_history->getBaseline();
+                double delta = util.cpu_percent - baseline.cpu_percent;
+                std::string delta_str = (delta >= 0 ? "+" : "") + std::to_string((int)delta) + "%";
+                std::string delta_color = std::abs(delta) > 10 ? COLOR_YELLOW : COLOR_GREEN;
+                oss << "  vs base:  ";
+                if (opts.use_colors) oss << delta_color;
+                oss << delta_str << " (baseline: " << std::fixed << std::setprecision(1) << baseline.cpu_percent << "%)";
+                if (opts.use_colors) oss << COLOR_RESET;
+                oss << "\n";
+            }
             
             if (opts.show_alerts && util.cpu_percent >= 90) {
                 oss << colorize("  " + Icons::WARNING + " WARNING: High CPU usage!", COLOR_RED) << "\n";
@@ -705,8 +730,32 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
             if (opts.show_progress_bars) {
                 oss << " " << getProgressBar(util.ram_percent);
             }
+            
+            // Add sparkline and trend for RAM
+            if (opts.show_history && opts.metric_history) {
+                auto ram_hist = opts.metric_history->getRamHistory(20);
+                if (ram_hist.size() >= 2) {
+                    oss << " " << opts.metric_history->renderSparkline(ram_hist);
+                    double trend = opts.metric_history->getRamTrend();
+                    oss << opts.metric_history->getTrendArrow(trend);
+                }
+            }
+            
             oss << "\n";
             oss << "RAM Avail:  " << util.available_ram_mb << " MB\n";
+            
+            // Baseline comparison for RAM
+            if (opts.show_baseline_comparison && opts.metric_history && opts.metric_history->hasBaseline()) {
+                auto baseline = opts.metric_history->getBaseline();
+                double delta = util.ram_percent - baseline.ram_percent;
+                std::string delta_str = (delta >= 0 ? "+" : "") + std::to_string((int)delta) + "%";
+                std::string delta_color = delta > 10 ? COLOR_RED : (std::abs(delta) > 5 ? COLOR_YELLOW : COLOR_GREEN);
+                oss << "  vs base:  ";
+                if (opts.use_colors) oss << delta_color;
+                oss << delta_str << " (baseline: " << std::fixed << std::setprecision(1) << baseline.ram_percent << "%)";
+                if (opts.use_colors) oss << COLOR_RESET;
+                oss << "\n";
+            }
             
             if (opts.show_alerts && util.ram_percent >= 90) {
                 oss << colorize("  " + Icons::WARNING + " WARNING: Low memory!", COLOR_RED) << "\n";

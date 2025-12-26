@@ -58,6 +58,9 @@ void printHelp() {
               << "  " << PROGRAM_NAME << " --cpu-only -w -i 1    # Watch CPU usage every second\n"
               << "  " << PROGRAM_NAME << " -s -f json -o hw.json # Save hardware info to JSON\n"
               << "  " << PROGRAM_NAME << " -d -t --alerts        # Dynamic with timestamps and alerts\n"
+              << "  " << PROGRAM_NAME << " -w --history          # Watch mode with sparklines\n"
+              << "  " << PROGRAM_NAME << " --save-baseline base.dat # Save current state as baseline\n"
+              << "  " << PROGRAM_NAME << " --baseline --load-baseline base.dat # Compare to baseline\n"
               << std::endl;
 }
 

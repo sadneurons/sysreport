@@ -5,7 +5,7 @@
 #include <vector>
 
 // Version information
-const std::string VERSION = "0.1.0";
+const std::string VERSION = "0.3.0";
 const std::string PROGRAM_NAME = "sysreport";
 
 // Helper functions

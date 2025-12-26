@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-26
+
+### Added
+- **Historical Data & Trends**: Track metrics over time and visualize trends
+  - Sparkline charts showing recent metric history (▁▂▃▅▇)
+  - Trend indicators with arrows (↑ rising, ↓ falling, → stable)
+  - Linear regression-based trend calculation
+  - Baseline snapshot capture and comparison
+  - Save/load baseline metrics to/from file
+  - Delta comparison vs baseline (CPU, RAM)
+  - CSV export format for historical data
+  - New CLI flags: `--history`, `--baseline`, `--save-baseline FILE`, `--load-baseline FILE`
+- MetricHistory class for time-series data storage with rolling window
+- Sparkline rendering using Unicode block characters
+
+### Changed
+- Updated help text with history and baseline examples
+- DisplayOptions struct now includes history-related fields
+
 ## [0.2.0] - 2025-12-26
 
 ### Added

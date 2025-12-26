@@ -138,4 +138,9 @@ void applyConfigToDisplayOptions(const Config& config, DisplayOptions& opts) {
     if (config.disk_only) opts.disk_only = true;
     if (config.network_only) opts.network_only = true;
     if (config.process_only) opts.process_only = true;
+    
+    // Initialize history-related fields
+    opts.show_history = false;
+    opts.show_baseline_comparison = false;
+    opts.metric_history = nullptr;
 }

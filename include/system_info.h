@@ -93,6 +93,9 @@ struct UtilizationInfo {
     std::vector<FanInfo> fans;
 };
 
+// Forward declaration
+class MetricHistory;
+
 // Display options
 struct DisplayOptions {
     bool show_static;
@@ -109,6 +112,11 @@ struct DisplayOptions {
     bool disk_only;
     bool network_only;
     bool process_only;
+    
+    // History & trends
+    bool show_history;
+    bool show_baseline_comparison;
+    MetricHistory* metric_history;
 };
 
 // Functions to gather system information

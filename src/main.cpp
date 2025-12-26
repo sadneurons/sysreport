@@ -4,10 +4,12 @@
 #include <vector>
 #include <iomanip>
 #include <unistd.h>
+#include <chrono>
 #include "cli.h"
 #include "system_info.h"
 #include "config.h"
 #include "tui.h"
+#include "history.h"
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
@@ -104,6 +106,13 @@ int main(int argc, char* argv[]) {
         opts.show_alerts = true;
     }
     
+    // History options
+    opts.show_history = hasFlag(args, "--history");
+    opts.show_baseline_comparison = hasFlag(args, "--baseline");
+    
+    std::string save_baseline_file = getOptionValue(args, "--save-baseline");
+    std::string load_baseline_file = getOptionValue(args, "--load-baseline");
+    
     // Get format
     opts.format = getOptionValue(args, "-f");
     if (opts.format.empty()) {
@@ -148,7 +157,25 @@ int main(int argc, char* argv[]) {
         }
     }
     
+    // Initialize history tracking
+    MetricHistory history;
+    
+    // Load baseline if specified
+    if (!load_baseline_file.empty()) {
+        if (history.loadFromFile(load_baseline_file)) {
+            auto latest = history.getLatest();
+            if (latest.timestamp.time_since_epoch().count() > 0) {
+                history.setBaseline(latest);
+            } else {
+                std::cerr << "Warning: Loaded baseline file but no data found\n";
+            }
+        } else {
+            std::cerr << "Warning: Could not load baseline from " << load_baseline_file << "\n";
+        }
+    }
+    
     // Main loop
+    int iteration = 0;
     do {
         // Clear screen in watch mode (text format only)
         if (watch_mode && opts.format == "text") {
@@ -166,6 +193,34 @@ int main(int argc, char* argv[]) {
         if (opts.show_dynamic) {
             util = getUtilizationInfo();
         }
+        
+        // Create snapshot for history
+        if (opts.show_history || opts.show_baseline_comparison || !save_baseline_file.empty()) {
+            MetricSnapshot snapshot;
+            snapshot.timestamp = std::chrono::steady_clock::now();
+            snapshot.cpu_percent = util.cpu_percent;
+            snapshot.ram_percent = util.ram_percent;
+            snapshot.swap_percent = util.swap_percent;
+            
+            // GPU if available
+            if (!util.gpus.empty() && util.gpus[0].available) {
+                snapshot.gpu_percent = util.gpus[0].utilization_percent;
+                snapshot.gpu_temp = util.gpus[0].temperature;
+            } else {
+                snapshot.gpu_percent = 0.0;
+                snapshot.gpu_temp = 0.0;
+            }
+            
+            history.addSnapshot(snapshot);
+            
+            // Save baseline on first iteration if requested
+            if (!save_baseline_file.empty() && iteration == 0) {
+                history.setBaseline(snapshot);
+            }
+        }
+        
+        // Store history in opts for display
+        opts.metric_history = &history;
         
         // Format output
         std::string output = formatOutput(hw, util, opts);
@@ -192,7 +247,19 @@ int main(int argc, char* argv[]) {
             sleep(interval);
         }
         
+        iteration++;
+        
     } while (watch_mode);
+    
+    // Save baseline if requested
+    if (!save_baseline_file.empty()) {
+        if (history.saveToFile(save_baseline_file)) {
+            std::cout << "Baseline saved to: " << save_baseline_file << std::endl;
+        } else {
+            std::cerr << "Error: Could not save baseline to " << save_baseline_file << std::endl;
+            return 1;
+        }
+    }
     
     return 0;
 }

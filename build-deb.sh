@@ -28,8 +28,26 @@ cp README.md debian/usr/share/doc/sysreport/
 cp sysreport.1 debian/usr/share/man/man1/sysreport.1
 gzip -9 -f debian/usr/share/man/man1/sysreport.1
 
-# Update control file if needed (already created)
-# The control file should already exist in debian/DEBIAN/control
+# Create control file
+cat > debian/DEBIAN/control << EOF
+Package: sysreport
+Version: 0.1.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: libc6 (>= 2.34), libstdc++6 (>= 11)
+Maintainer: Your Name <you@example.com>
+Description: System monitoring and reporting tool
+ A lightweight command-line tool for monitoring system vital statistics
+ including CPU, memory, disk, network, and process information.
+ .
+ Features include:
+  - Real-time system monitoring
+  - Multiple output formats (text, JSON, CSV)
+  - Watch mode with configurable intervals
+  - Colored output with progress bars
+  - Filtering options for specific metrics
+EOF
 
 # Build the package
 echo "Building .deb package..."

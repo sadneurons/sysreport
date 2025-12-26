@@ -34,3 +34,9 @@ sysreport
 core
 vgcore.*
 *.tmp
+
+# Development planning
+TODO.md
+TODO.txt
+NOTES.md
+.notes/

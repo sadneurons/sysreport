@@ -1,4 +1,5 @@
 #include "system_info.h"
+#include "format.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -422,13 +423,14 @@ UtilizationInfo getUtilizationInfo() {
 
 std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, const DisplayOptions& opts) {
     std::ostringstream oss;
+    int term_width = getTerminalWidth();
     
     if (opts.show_timestamp) {
-        oss << colorize("Timestamp: " + getTimestamp(), COLOR_CYAN) << "\n\n";
+        oss << colorize(Icons::CLOCK + " Timestamp: " + getTimestamp(), COLOR_CYAN) << "\n\n";
     }
     
     if (opts.show_static && !opts.cpu_only && !opts.memory_only && !opts.disk_only && !opts.network_only && !opts.process_only) {
-        oss << colorize("=== HARDWARE INFORMATION ===", COLOR_BOLD) << "\n";
+        oss << createSeparator(Icons::CHECK + " HARDWARE INFORMATION", term_width) << "\n";
         oss << "OS:         " << hw.os_info << "\n";
         oss << "CPU Model:  " << hw.cpu_model << "\n";
         oss << "CPU Cores:  " << hw.cpu_cores << "\n";
@@ -452,7 +454,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
     }
     
     if (opts.show_dynamic) {
-        oss << colorize("=== UTILIZATION ===", COLOR_BOLD) << "\n";
+        oss << createSeparator(Icons::CPU + " UTILIZATION", term_width) << "\n";
         
         if (!opts.memory_only && !opts.disk_only && !opts.network_only && !opts.process_only) {
             std::string color = getColorForPercent(util.cpu_percent);
@@ -466,7 +468,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
             oss << "\n";
             
             if (opts.show_alerts && util.cpu_percent >= 90) {
-                oss << colorize("  ⚠ WARNING: High CPU usage!", COLOR_RED) << "\n";
+                oss << colorize("  " + Icons::WARNING + " WARNING: High CPU usage!", COLOR_RED) << "\n";
             }
             
             // Per-core usage
@@ -488,7 +490,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
             oss << "Uptime:     " << util.uptime << "\n";
             
             if (!util.temperatures.empty()) {
-                oss << "Temp:       ";
+                oss << Icons::TEMP + " Temp:       ";
                 for (size_t i = 0; i < util.temperatures.size(); i++) {
                     if (i > 0) oss << ", ";
                     double temp = util.temperatures[i];
@@ -504,7 +506,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
         
         if (!opts.cpu_only && !opts.disk_only && !opts.network_only && !opts.process_only) {
             std::string ram_color = getColorForPercent(util.ram_percent);
-            oss << "RAM Used:   ";
+            oss << Icons::MEMORY + " RAM Used:   ";
             if (opts.use_colors) oss << ram_color;
             oss << util.used_ram_mb << " MB / " << std::fixed << std::setprecision(1) << util.ram_percent << "%";
             if (opts.use_colors) oss << COLOR_RESET;
@@ -515,7 +517,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
             oss << "RAM Avail:  " << util.available_ram_mb << " MB\n";
             
             if (opts.show_alerts && util.ram_percent >= 90) {
-                oss << colorize("  ⚠ WARNING: Low memory!", COLOR_RED) << "\n";
+                oss << colorize("  " + Icons::WARNING + " WARNING: Low memory!", COLOR_RED) << "\n";
             }
             
             if (util.used_swap_mb > 0) {
@@ -535,7 +537,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
         if (!opts.cpu_only && !opts.memory_only && !opts.network_only && !opts.process_only) {
             for (const auto& disk : util.disks) {
                 std::string disk_color = getColorForPercent(disk.percent);
-                oss << "Disk " << disk.mount_point << ":\n";
+                oss << Icons::DISK + " Disk " << disk.mount_point << ":\n";
                 oss << "  Used:     ";
                 if (opts.use_colors) oss << disk_color;
                 oss << disk.used_gb << " GB / " << std::fixed << std::setprecision(1) << disk.percent << "%";
@@ -547,7 +549,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
                 oss << "  Available: " << disk.available_gb << " GB\n";
                 
                 if (opts.show_alerts && disk.percent >= 90) {
-                    oss << colorize("  ⚠ WARNING: Low disk space!", COLOR_RED) << "\n";
+                    oss << colorize("  " + Icons::WARNING + " WARNING: Low disk space!", COLOR_RED) << "\n";
                 }
             }
             oss << "\n";
@@ -555,7 +557,7 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
         
         if (!opts.cpu_only && !opts.memory_only && !opts.disk_only && !opts.process_only) {
             if (!util.network.empty()) {
-                oss << "Network:\n";
+                oss << Icons::NETWORK + " Network:\n";
                 for (const auto& net : util.network) {
                     oss << "  " << std::setw(10) << std::left << net.interface << ": ";
                     oss << "RX " << std::setw(10) << std::right << (net.rx_bytes / 1024 / 1024) << " MB  ";
@@ -567,12 +569,23 @@ std::string formatAsText(const HardwareInfo& hw, const UtilizationInfo& util, co
         
         if (!opts.cpu_only && !opts.memory_only && !opts.disk_only && !opts.network_only) {
             if (!util.top_processes.empty()) {
-                oss << "Top Processes (by memory):\n";
+                oss << Icons::PROCESS + " Top Processes (by memory):\n";
+                
+                // Create a formatted table
+                Table table;
+                table.addColumn("PID", true);
+                table.addColumn("Name", false);
+                table.addColumn("Memory", true);
+                
                 for (const auto& proc : util.top_processes) {
-                    oss << "  " << std::setw(7) << proc.pid << "  ";
-                    oss << std::setw(30) << std::left << proc.name.substr(0, 30) << "  ";
-                    oss << std::setw(8) << std::right << proc.mem_mb << " MB\n";
+                    table.addRow({
+                        std::to_string(proc.pid),
+                        proc.name.substr(0, 30),
+                        std::to_string(proc.mem_mb) + " MB"
+                    });
                 }
+                
+                oss << table.render(opts.use_colors);
             }
         }
     }

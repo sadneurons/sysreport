@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Beautiful box-drawing table formatting for process display
+- Unicode icons for all major sections (CPU, RAM, disk, network, processes, etc.)
+- Automatic terminal width detection for responsive output
+- Professional section separators with box-drawing characters
+- Improved column alignment and visual hierarchy
+
+### Fixed
+- UTF-8 encoding issues with box-drawing characters
+
 ## [0.1.0] - 2025-12-26
 
 ### Added

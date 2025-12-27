@@ -13,6 +13,7 @@
 #include "exporters.h"
 #include "daemon.h"
 #include "plugin.h"
+#include "security.h"
 
 int main(int argc, char* argv[]) {
     // Parse command line arguments
@@ -30,8 +31,21 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
-    // Initialize plugin manager
+    // Initialize security manager
+    SecurityManager security_mgr;
+    
+    // Check plugin security level
+    std::string plugin_security = getOptionValue(args, "--plugin-security");
+    bool no_sandbox = hasFlag(args, "--no-plugin-sandbox");
+    
+    // Initialize plugin manager with security
     PluginManager plugin_manager;
+    plugin_manager.setSecurityManager(&security_mgr);
+    plugin_manager.setSecurityEnforcement(!no_sandbox);
+    
+    if (!no_sandbox && !plugin_security.empty()) {
+        std::cout << "Plugin security level: " << plugin_security << std::endl;
+    }
     
     // Handle plugin loading
     std::string plugin_file = getOptionValue(args, "--plugin");

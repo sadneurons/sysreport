@@ -1,4 +1,5 @@
 #include "plugin.h"
+#include "security.h"
 #include "format.h"
 #include <iostream>
 #include <dlfcn.h>
@@ -14,7 +15,16 @@ const std::string COLOR_YELLOW = "\033[33m";
 const std::string COLOR_CYAN = "\033[36m";
 const std::string COLOR_BOLD = "\033[1m";
 
-PluginManager::PluginManager() : plugin_dir("/usr/lib/sysreport/plugins") {
+PluginManager::PluginManager() 
+    : plugin_dir("/usr/lib/sysreport/plugins")
+    , security_manager(nullptr)
+    , enforce_security(false) {
+}
+
+PluginManager::PluginManager(SecurityManager* sec_mgr)
+    : plugin_dir("/usr/lib/sysreport/plugins")
+    , security_manager(sec_mgr)
+    , enforce_security(true) {
 }
 
 PluginManager::~PluginManager() {
@@ -22,6 +32,14 @@ PluginManager::~PluginManager() {
 }
 
 bool PluginManager::loadPlugin(const std::string& plugin_path) {
+    // Security validation
+    if (security_manager && enforce_security) {
+        if (!security_manager->validatePluginPath(plugin_path)) {
+            std::cerr << "Security validation failed for: " << plugin_path << std::endl;
+            return false;
+        }
+    }
+    
     // Load shared library
     void* handle = dlopen(plugin_path.c_str(), RTLD_LAZY);
     if (!handle) {
@@ -35,6 +53,7 @@ bool PluginManager::loadPlugin(const std::string& plugin_path) {
     plugin->handle = handle;
     plugin->path = plugin_path;
     plugin->initialized = false;
+    plugin->security_validated = (security_manager != nullptr && enforce_security);
     
     // Load plugin info function
     plugin->get_info = (GetPluginInfoFunc)dlsym(handle, "get_plugin_info");
@@ -278,4 +297,13 @@ bool PluginManager::validatePlugin(Plugin* plugin) {
     }
     
     return true;
+}
+
+// Security methods
+void PluginManager::setSecurityManager(SecurityManager* sec_mgr) {
+    security_manager = sec_mgr;
+}
+
+void PluginManager::setSecurityEnforcement(bool enforce) {
+    enforce_security = enforce;
 }

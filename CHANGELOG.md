@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-12-26
+
+### Added
+- **Security & Sandboxing**: Plugin security framework
+  - SecurityManager class for plugin validation
+  - Plugin path validation (prevent path traversal, check file permissions)
+  - Plugin security policies (default, restricted, permissive)
+  - Resource limits (memory, CPU, file descriptors)
+  - Security event audit logging
+  - `--plugin-security LEVEL` flag for security policy selection
+  - `--no-plugin-sandbox` flag to disable sandboxing (unsafe mode)
+  - PrivilegeGuard RAII class for temporary privilege elevation
+  - World-writable plugin detection
+  - .so file extension validation
+
+### Security
+- Plugins validated before loading
+- Path traversal attempts blocked
+- Security events logged to /var/log/sysreport-security.log
+- Plugin security_validated flag tracked per plugin
+- Support for future seccomp-bpf and capability dropping
+
+### Technical
+- Added security.h and security.cpp
+- PluginManager integrated with SecurityManager
+- Security validation in plugin loading pipeline
+- Forward declarations for SecurityManager in plugin.h
+
 ## [0.5.0] - 2025-12-26
 
 ### Added

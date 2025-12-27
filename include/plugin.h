@@ -6,6 +6,9 @@
 #include <map>
 #include <functional>
 
+// Forward declarations
+class SecurityManager;
+
 // Plugin API version
 #define SYSREPORT_PLUGIN_API_VERSION 1
 
@@ -49,16 +52,23 @@ struct Plugin {
     CleanupPluginFunc cleanup;
     
     bool initialized;
+    bool security_validated;
 };
+
+// Forward declaration for SecurityManager
+class SecurityManager;
 
 // Plugin Manager
 class PluginManager {
 private:
     std::vector<Plugin*> loaded_plugins;
     std::string plugin_dir;
+    SecurityManager* security_manager;
+    bool enforce_security;
     
 public:
     PluginManager();
+    PluginManager(SecurityManager* sec_mgr);
     ~PluginManager();
     
     // Plugin loading
@@ -77,6 +87,11 @@ public:
     // Display
     std::string formatPluginMetrics(bool use_colors = true);
     void listPlugins() const;
+    
+    // Security
+    void setSecurityManager(SecurityManager* sec_mgr);
+    void setSecurityEnforcement(bool enforce);
+    bool isSecurityEnforced() const { return enforce_security; }
     
 private:
     bool validatePlugin(Plugin* plugin);

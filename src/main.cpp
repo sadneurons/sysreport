@@ -31,17 +31,33 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
+    // Check for root execution (security risk)
+    if (SecurityManager::isRunningAsRoot() && !hasFlag(args, "--allow-root")) {
+        std::cerr << "\n⚠️  WARNING: Running as root is a security risk!\n";
+        std::cerr << "\nFor security reasons, sysreport should not be run as root.\n";
+        std::cerr << "If you must run as root, use the --allow-root flag explicitly.\n";
+        std::cerr << "\nExample: sudo sysreport --allow-root\n" << std::endl;
+        return 1;
+    }
+    
     // Initialize security manager
     SecurityManager security_mgr;
+    
+    // Check signature verification setting
+    bool no_verify_sigs = hasFlag(args, "--no-verify-signatures");
+    if (no_verify_sigs) {
+        security_mgr.requireSignatures(false);
+        std::cerr << "⚠️  WARNING: Plugin signature verification disabled!\n" << std::endl;
+    }
     
     // Check plugin security level
     std::string plugin_security = getOptionValue(args, "--plugin-security");
     bool no_sandbox = hasFlag(args, "--no-plugin-sandbox");
     
-    // Initialize plugin manager with security
+    // Initialize plugin manager with security (enabled by default)
     PluginManager plugin_manager;
     plugin_manager.setSecurityManager(&security_mgr);
-    plugin_manager.setSecurityEnforcement(!no_sandbox);
+    plugin_manager.setSecurityEnforcement(!no_sandbox);  // Default: true
     
     if (!no_sandbox && !plugin_security.empty()) {
         std::cout << "Plugin security level: " << plugin_security << std::endl;

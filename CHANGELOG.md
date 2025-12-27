@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-12-27
+
+### Added - Production Security Features
+- **GPG Signature Verification**: Plugins must be signed with GPG by default
+  - Automatic .sig file detection and verification
+  - Uses system `gpg` command for signature validation
+  - `--no-verify-signatures` flag to disable (unsafe, development only)
+  - Security events logged for signature failures
+- **Root Execution Protection**: Prevents accidental root execution
+  - Detects root privileges (uid=0 or euid=0)
+  - Requires explicit `--allow-root` flag to proceed
+  - Clear warning message with security explanation
+- **Stricter Default Security**: Production-safe defaults
+  - Security enforcement enabled by default (was disabled)
+  - Default policy changed from "default" to "restricted"
+  - Plugins sandboxed by default with minimal permissions
+  - Resource limits enforced automatically
+
+### Changed
+- Default plugin security policy is now "restricted" (was more permissive)
+- Plugin manager enables security enforcement by default
+- Signature verification required unless explicitly disabled
+- Help text updated with security notes and best practices
+
+### Security
+- **BREAKING**: Unsigned plugins will be rejected by default
+- Root execution blocked unless explicitly allowed
+- Tighter sandboxing for untrusted plugins
+- Security audit trail for all validation events
+
+### Documentation
+- Added "SECURITY NOTES" section to help output
+- Updated examples to show signed plugin usage
+- Added warnings for unsafe flags (--no-verify-signatures, --allow-root)
+
 ## [0.6.0] - 2025-12-26
 
 ### Added

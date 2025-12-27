@@ -2,7 +2,7 @@
 
 # Build the project
 echo "Building sysreport..."
-VERSION="0.6.0"
+VERSION="0.7.0"
 make clean
 make
 
@@ -36,7 +36,7 @@ gzip -9 -f debian/usr/share/man/man1/sysreport.1
 # Create control file
 cat > debian/DEBIAN/control << EOF
 Package: sysreport
-Version: 0.6.0
+Version: 0.7.0
 Section: utils
 Priority: optional
 Architecture: amd64
@@ -59,13 +59,13 @@ EOF
 
 # Build the package
 echo "Building .deb package..."
-dpkg-deb --build debian sysreport_0.6.0_amd64.deb
+dpkg-deb --build debian sysreport_0.7.0_amd64.deb
 
 if [ $? -eq 0 ]; then
-    echo "Successfully created sysreport_0.6.0_amd64.deb"
+    echo "Successfully created sysreport_0.7.0_amd64.deb"
     echo ""
     echo "To install, run:"
-    echo "  sudo dpkg -i sysreport_0.6.0_amd64.deb"
+    echo "  sudo dpkg -i sysreport_0.7.0_amd64.deb"
     echo ""
     echo "To uninstall, run:"
     echo "  sudo dpkg -r sysreport"

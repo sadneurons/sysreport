@@ -18,7 +18,7 @@ const std::string COLOR_BOLD = "\033[1m";
 PluginManager::PluginManager() 
     : plugin_dir("/usr/lib/sysreport/plugins")
     , security_manager(nullptr)
-    , enforce_security(false) {
+    , enforce_security(true) {  // Default: security enabled
 }
 
 PluginManager::PluginManager(SecurityManager* sec_mgr)

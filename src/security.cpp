@@ -11,6 +11,7 @@
 SecurityManager::SecurityManager() 
     : capabilities_dropped(false)
     , seccomp_enabled(false)
+    , require_signatures(true)  // Default: require signatures for production
     , audit_log_path("/var/log/sysreport-security.log") {
 }
 
@@ -66,6 +67,14 @@ bool SecurityManager::validatePluginPath(const std::string& path) {
         return false;
     }
     
+    // Verify GPG signature if required
+    if (require_signatures) {
+        if (!verifyPluginSignature(path)) {
+            logSecurityEvent("ERROR", "Plugin signature verification required but failed: " + path);
+            return false;
+        }
+    }
+    
     return true;
 }
 
@@ -95,9 +104,39 @@ bool SecurityManager::isPathAllowed(const std::string& path, const PluginSecurit
 }
 
 bool SecurityManager::verifyPluginSignature(const std::string& plugin_path) {
-    // TODO: Implement GPG signature verification
-    (void)plugin_path;
-    return true;
+    // Check for .sig file
+    std::string sig_path = plugin_path + ".sig";
+    
+    struct stat st;
+    if (stat(sig_path.c_str(), &st) != 0) {
+        logSecurityEvent("WARNING", "No signature file found for plugin: " + plugin_path);
+        return false;
+    }
+    
+    // Verify signature using gpg
+    std::string cmd = "gpg --verify " + sig_path + " " + plugin_path + " 2>&1";
+    FILE* pipe = popen(cmd.c_str(), "r");
+    if (!pipe) {
+        logSecurityEvent("ERROR", "Failed to execute gpg for verification");
+        return false;
+    }
+    
+    char buffer[256];
+    std::string result;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    
+    int status = pclose(pipe);
+    
+    if (status == 0) {
+        logSecurityEvent("INFO", "Plugin signature verified: " + plugin_path);
+        return true;
+    } else {
+        logSecurityEvent("ERROR", "Plugin signature verification failed: " + plugin_path);
+        logSecurityEvent("DETAILS", result);
+        return false;
+    }
 }
 
 bool SecurityManager::setResourceLimits(const PluginSecurityPolicy& policy) {
@@ -148,19 +187,8 @@ void SecurityManager::logSecurityEvent(const std::string& level, const std::stri
 }
 
 PluginSecurityPolicy SecurityManager::getDefaultPolicy() {
-    PluginSecurityPolicy policy;
-    policy.allowed_permissions = {
-        PluginPermission::READ_PROC,
-        PluginPermission::READ_SYS
-    };
-    policy.enforce_sandboxing = false;
-    policy.max_memory_mb = 100;
-    policy.max_cpu_percent = 10;
-    policy.max_file_descriptors = 64;
-    policy.allow_network = false;
-    policy.allowed_paths = {"/proc", "/sys"};
-    policy.denied_paths = {"/etc/shadow", "/root", "/home"};
-    return policy;
+    // Default policy is now restricted for production security
+    return getRestrictedPolicy();
 }
 
 PluginSecurityPolicy SecurityManager::getRestrictedPolicy() {
@@ -206,6 +234,19 @@ bool SecurityManager::isSafePath(const std::string& path) {
     if (path.find('\0') != std::string::npos) return false;
     if (path.empty()) return false;
     return true;
+}
+
+bool SecurityManager::isRunningAsRoot() {
+    return getuid() == 0 || geteuid() == 0;
+}
+
+void SecurityManager::requireSignatures(bool require) {
+    require_signatures = require;
+    logSecurityEvent("INFO", require ? "Plugin signature verification enabled" : "Plugin signature verification disabled");
+}
+
+bool SecurityManager::isSignatureRequired() const {
+    return require_signatures;
 }
 
 // PrivilegeGuard implementation

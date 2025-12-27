@@ -45,8 +45,15 @@ public:
     // Check if path is allowed for plugin access
     bool isPathAllowed(const std::string& path, const PluginSecurityPolicy& policy);
     
-    // Verify plugin signature (future: implement GPG signature checking)
+    // Verify plugin signature using GPG
     bool verifyPluginSignature(const std::string& plugin_path);
+    
+    // Check if running as root (security risk)
+    static bool isRunningAsRoot();
+    
+    // Require signature verification for plugins
+    void requireSignatures(bool require);
+    bool isSignatureRequired() const;
     
     // Set resource limits for plugin execution
     bool setResourceLimits(const PluginSecurityPolicy& policy);
@@ -69,6 +76,7 @@ public:
 private:
     bool capabilities_dropped;
     bool seccomp_enabled;
+    bool require_signatures;
     std::string audit_log_path;
     
     // Helper: check if running as root
